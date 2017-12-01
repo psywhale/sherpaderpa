@@ -1,13 +1,11 @@
 import requests
 import json
-import os
+import os, sys
 import configparser
 
 from pprint import pprint
 
 
-#API="znmvgrccmkkynmfez3k2mcjxfgbhk95h"
-URL="api.sherpadesk.com"
 INSKEY = ""
 ORGKEY = ""
 CONFIGPATH = os.path.expanduser("~/sherpa.ini")
@@ -23,7 +21,7 @@ def GetInstance_OrgKey():
         response.raise_for_status()
     except requests.RequestException as e:
         print(e)
-        quit(1)
+        sys.exit(1)
 
     responsej = response.json()
 
@@ -58,7 +56,7 @@ def TimeOnTicket(key):
         res.raise_for_status()
     except requests.RequestException as e:
         print(e)
-        quit(1)
+        sys.exit(1)
 
     return
 
@@ -80,7 +78,7 @@ def CloseTicket(key):
         res.raise_for_status()
     except requests.RequestException as e:
         print(e)
-        quit(1)
+
 
 def FirstTime():
     global CONFIGPATH
