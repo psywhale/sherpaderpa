@@ -2,7 +2,6 @@ import requests
 import json
 import os, sys
 import configparser
-
 from pprint import pprint
 
 
@@ -10,6 +9,13 @@ INSKEY = ""
 ORGKEY = ""
 CONFIGPATH = os.path.expanduser("~/sherpa.ini")
 CONFIG = ""
+
+
+def ClearScreen():
+    print("\033[H\033[J")
+
+
+
 
 def GetInstance_OrgKey():
     global INSKEY, ORGKEY, CONFIG
@@ -79,6 +85,19 @@ def CloseTicket(key):
     except requests.RequestException as e:
         print(e)
 
+def PrintTicket(key):
+    global INSKEY, ORGKEY, CONFIG
+    url = 'https://{}-{}x:{}@{}/tickets/{}'.format(ORGKEY, INSKEY, CONFIG['SHERPA']['APIKEY'], CONFIG['SHERPA']['URL'],key)
+
+
+    try:
+        res = requests.get(url, headers={'content-type': 'application/json'})
+        res.raise_for_status()
+    except requests.RequestException as e:
+        print(e)
+        sys.exit(1)
+
+    return res.json()
 
 def FirstTime():
     global CONFIGPATH
@@ -117,14 +136,23 @@ def main():
     r = GetOpenTickets()
 
     for tickets in r:
-        print("\n" * 200)
+        ClearScreen()
+        print("-" * 70 + "\n")
+        ticket_body = str(tickets['initial_post']).replace('<br>', '\n')
+        if ticket_body.__len__() > 600:
+            print("{}\t{}\t\t{}\n".format(tickets['user_email'],
+                                            tickets['subject'],
+                                            tickets['days_old']))
+            details = input("=" * 50 + "  details?:")
+            if details == "y":
+                singleticket = PrintTicket(tickets['key'])
 
-        #pprint(tickets)
-        print("-" * 70)
-        print("{}\t{}\t\t{}\n{}".format(tickets['user_email'],
+                print("\n{}\n".format(str(singleticket['initial_post']).replace('<br>', '\n')))
+        else:
+            print("{}\t{}\t\t{}\n{}".format(tickets['user_email'],
                                         tickets['subject'],
                                         tickets['days_old'],
-                                        str(tickets['initial_post']).replace('<br>', '\n')))
+                                        ticket_body))
         closeit = input("=" * 58 +"Close Y/[N]:")
 
         if closeit == "y":
@@ -135,7 +163,6 @@ def main():
     #pprint(r)
 
 
-
-
 if __name__ == '__main__':
+
     main()
