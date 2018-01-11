@@ -3,6 +3,7 @@ import json
 import os, sys
 import configparser
 from pprint import pprint
+import urwid
 
 
 INSKEY = ""
@@ -67,10 +68,10 @@ def TimeOnTicket(key):
     return
 
 
-def CloseTicket(key):
+def CloseTicket(key,note):
     global INSKEY, ORGKEY, CONFIG
     url = 'https://{}-{}x:{}@{}/tickets/{}'.format(ORGKEY, INSKEY, CONFIG['SHERPA']['APIKEY'], CONFIG['SHERPA']['URL'],key)
-    note = input("Confirmation message? ")
+
     payload = json.dumps({
         "status": "closed",
         "note_text": note,
@@ -119,8 +120,38 @@ def FirstTime():
 
     return
 
+def MainMenu(title, tickets):
+    body = [urwid.Text(title),urwid.Divider()]
+    for t in tickets:
+        button = urwid.Button(t['subject'],TicketMenu,t['key'])
+        body.append(urwid.AttrMap(button,None,focus_map='reversed'))
+    return urwid.ListBox(urwid.SimpleFocusListWalker(body))
+
+def CloseMenu(button,ticketdata):
+    key = ticketdata[0]
+    message = ticketdata[1]
+    CloseTicket(key,message)
+
+
+
+def TicketMenu(button,key):
+    ticket = PrintTicket(key)
+    title = [urwid.Text(ticket['subject']), urwid.Divider()]
+    body = urwid.Text(ticket['initial_post'])
+    close = urwid.Edit("close message",None,True)
+
+    closebtn = urwid.Button('Close Ticket',CloseMenu,[key,close.get_edit_text])
+
+    backbtn = urwid.Button('Back',MainMenu('Tickets',GetOpenTickets())).focus
+    bottommenu = [closebtn, urwid.Divider(), backbtn]
+    bottom - urwid.Columns(bottommenu)
+
+
+
+
 def main():
     global CONFIGPATH,CONFIG
+
 
 
     if not os.path.exists(CONFIGPATH):
